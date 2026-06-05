@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+    <!-- Place the impersonation banner at the very top of every page. The block
+         self-gates: it renders nothing unless the session is an impersonation. -->
+    <default>
+        <reference name="after_body_start">
+            <block type="loginascustomer/frontend_banner"
+                   name="loginascustomer.banner"
+                   template="mageaustralia/loginascustomer/banner.phtml"/>
+        </reference>
+    </default>
+</layout>

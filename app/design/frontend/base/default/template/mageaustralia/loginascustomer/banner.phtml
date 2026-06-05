@@ -1,0 +1,21 @@
+<?php
+/**
+ * Impersonation banner.
+ *
+ * @var MageAustralia_LoginAsCustomer_Block_Frontend_Banner $this
+ */
+?>
+<?php if ($this->isImpersonating()): ?>
+<div class="loginascustomer-banner" role="alert" style="position:relative;z-index:9999;background:#b30000;color:#fff;padding:10px 16px;text-align:center;font-size:14px;line-height:1.4;">
+    <strong><?php echo $this->escapeHtml($this->__('Admin session')); ?>:</strong>
+    <?php echo $this->escapeHtml($this->__('You are viewing the store as')); ?>
+    <strong><?php echo $this->escapeHtml($this->getCustomerName()); ?></strong>
+    <?php if ($this->getCustomerEmail()): ?>
+        (<?php echo $this->escapeHtml($this->getCustomerEmail()); ?>)
+    <?php endif; ?>
+    &nbsp;
+    <a href="<?php echo $this->escapeUrl($this->getExitUrl()); ?>" style="color:#fff;text-decoration:underline;font-weight:bold;">
+        <?php echo $this->escapeHtml($this->__('End session')); ?>
+    </a>
+</div>
+<?php endif; ?>

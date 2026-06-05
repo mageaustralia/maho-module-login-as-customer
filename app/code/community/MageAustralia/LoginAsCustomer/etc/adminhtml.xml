@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<config>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <customer>
+                        <children>
+                            <loginascustomer translate="title" module="loginascustomer">
+                                <title>Login as Customer</title>
+                                <sort_order>200</sort_order>
+                                <children>
+                                    <log translate="title" module="loginascustomer">
+                                        <title>Login as Customer Log</title>
+                                    </log>
+                                </children>
+                            </loginascustomer>
+                        </children>
+                    </customer>
+                    <system>
+                        <children>
+                            <config>
+                                <children>
+                                    <loginascustomer translate="title" module="loginascustomer">
+                                        <title>Login as Customer Section</title>
+                                    </loginascustomer>
+                                </children>
+                            </config>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+
+    <menu>
+        <customer>
+            <children>
+                <loginascustomer_log translate="title" module="loginascustomer">
+                    <title>Login as Customer Log</title>
+                    <action>adminhtml/logincustomer_log/index</action>
+                    <sort_order>200</sort_order>
+                </loginascustomer_log>
+            </children>
+        </customer>
+    </menu>
+</config>

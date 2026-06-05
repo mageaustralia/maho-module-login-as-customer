@@ -1,0 +1,21 @@
+{
+    "name": "mageaustralia/maho-module-login-as-customer",
+    "description": "Secure 'Login as Customer' for Maho admin. One-time, hashed, short-TTL tokens; full audit log; visible impersonation banner on the storefront. No core rewrites.",
+    "type": "maho-module",
+    "license": "OSL-3.0",
+    "authors": [
+        {
+            "name": "MageAustralia",
+            "homepage": "https://www.mageaustralia.com.au"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "mahocommerce/maho": "^26.5"
+    },
+    "autoload": {
+        "psr-0": {
+            "MageAustralia_LoginAsCustomer_": "app/code/community/"
+        }
+    }
+}
