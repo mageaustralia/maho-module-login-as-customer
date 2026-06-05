@@ -10,36 +10,53 @@ A security-hardened, Maho-native replacement for the legacy `Widgento_Login` /
 
 ## How it works
 
+The module delegates the actual login to **Maho core's magic-link mechanism**,
+so it never invents its own session handling:
+
 1. On the admin **customer edit** page a **Login as Customer** button appears
    (gated by ACL + a confirm prompt).
-2. Clicking it hits a CSRF-protected admin action that mints a **one-time token**
-   and redirects to the storefront on the customer's own store view.
-3. The storefront leg **atomically consumes** the token, renews the session id,
-   logs the customer in, flags the session, and shows the impersonation banner.
-4. Every step is written to a permanent **audit log** (Customers > Login as
-   Customer Log).
+2. Clicking it hits a CSRF-protected admin action that mints a core magic-link
+   token on the customer (`generateMagicLinkToken()` + `changeResetPasswordLinkToken()`),
+   writes a "requested" audit row, and redirects to core's
+   `customer/account/magicLinkLogin` on the customer's own store view.
+3. Core validates the token (timing-safe, expiring, one-time), establishes the
+   session through the **same proven path as a normal login**, and clears the
+   token.
+4. A `customer_login` observer matches the login to the pending "requested" row,
+   flags the session (for the banner), and records "success".
+5. The storefront shows a **red impersonation banner** with an End session link.
+
+Building on core magic-link is deliberate: it sidesteps the cross-host
+session/cookie pitfalls of a hand-rolled `loginById()` handover, and inherits
+core's token security and expiry.
 
 ## Security model
 
 | Concern | Approach |
 |---|---|
-| Token strength | 256-bit CSPRNG (`random_bytes(32)`), URL-safe encoded |
-| Token at rest | Only the **SHA-256 hash** is stored; the raw token lives only in the one-time URL. A DB read cannot mint a working link. |
-| Replay | **Single-use** via an atomic conditional UPDATE (affected-rows check) - safe under concurrency |
-| Expiry | Short TTL (default 60s, clamped 15-3600s); expired tokens are rejected and purged |
+| Token | Core magic-link token (`rp_token`): securely generated, **timing-safe** validated (`hash_equals`) |
+| One-time use | Core clears the token on login - the link cannot be replayed |
+| Expiry | Core's `customer/login/magic_link_token_expiration` (default 10 min) |
+| Session handling | Core's `magicLinkLogin` action - identical to normal login, no custom cookie code |
 | CSRF | Admin trigger is `_setForcedFormKeyActions(['create'])` and the link carries the form key |
 | Authorization | Dedicated ACL resource `admin/customer/loginascustomer` |
-| Session fixation | Session id is renewed before `loginById()` |
-| Session bleed | Prior front-end sessions (cart, wishlist, etc.) and any persistent "remember me" session are cleared first |
+| Account state | Inactive customers are refused |
 | Visibility | Red storefront banner ("Admin session - viewing as ...") with an End session link |
 | Auditability | Every request/success/failure logged with admin, customer, IP, user agent, outcome |
+
+## Requirements
+
+- Maho `^26.5`, PHP `^8.3`
+- **Magic Link login must be enabled**: System > Configuration > Customers >
+  Login Options > *Enable Magic Link* (`customer/login/magic_link_enabled`).
+  If it is off, the admin button is labelled accordingly and the action refuses
+  with a clear message. The module does **not** silently toggle core config.
 
 ## Configuration
 
 System > Configuration > Customers > **Login as Customer**
 
 - **Enabled** - master switch
-- **Token Lifetime (seconds)** - default 60
 - **Show Impersonation Banner** - default yes
 
 ## Permissions
@@ -47,11 +64,12 @@ System > Configuration > Customers > **Login as Customer**
 Grant the role resource **Customers > Login as Customer** to allow use, and
 **Customers > Login as Customer > Login as Customer Log** for log access.
 
-## Compatibility
+## Notes
 
-- Maho `^26.5`, PHP `^8.3`
-- No core rewrites (button injected via `adminhtml_widget_container_html_before`,
-  banner via a self-gating layout block)
+- No core rewrites (button injected via `adminhtml_widget_container_html_before`;
+  banner via a self-gating layout block; login via core magic-link).
+- Reusing the magic-link (`rp_token`) field means issuing an impersonation link
+  supersedes any pending customer password-reset link for that account.
 
 ## License
 

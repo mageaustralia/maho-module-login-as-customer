@@ -15,9 +15,6 @@
             <loginascustomer_resource>
                 <class>MageAustralia_LoginAsCustomer_Model_Resource</class>
                 <entities>
-                    <token>
-                        <table>mageaustralia_loginascustomer_token</table>
-                    </token>
                     <log>
                         <table>mageaustralia_loginascustomer_log</table>
                     </log>
@@ -51,6 +48,16 @@
                     </mageaustralia_loginascustomer_button>
                 </observers>
             </adminhtml_widget_container_html_before>
+            <!-- On customer login, detect an admin-initiated impersonation and
+                 flag the session for the banner + record success. -->
+            <customer_login>
+                <observers>
+                    <mageaustralia_loginascustomer_flag>
+                        <class>loginascustomer/observer</class>
+                        <method>onCustomerLogin</method>
+                    </mageaustralia_loginascustomer_flag>
+                </observers>
+            </customer_login>
         </events>
     </global>
 
@@ -67,15 +74,6 @@
     </admin>
 
     <frontend>
-        <routers>
-            <loginascustomer>
-                <use>standard</use>
-                <args>
-                    <module>MageAustralia_LoginAsCustomer</module>
-                    <frontName>loginascustomer</frontName>
-                </args>
-            </loginascustomer>
-        </routers>
         <layout>
             <updates>
                 <loginascustomer>
@@ -108,7 +106,6 @@
         <loginascustomer>
             <general>
                 <enabled>1</enabled>
-                <token_ttl>60</token_ttl>
                 <show_banner>1</show_banner>
             </general>
         </loginascustomer>

@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Admin entry point: mint a one-time login token and hand off to the storefront.
+ * Admin entry point: mint a core magic-link token for the customer and hand off
+ * to core's storefront magicLinkLogin action.
  *
  * URL: adminhtml/logincustomer_index/create
  *
@@ -15,8 +16,8 @@ declare(strict_types=1);
 class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_IndexController extends Mage_Adminhtml_Controller_Action
 {
     /**
-     * CSRF: the create action changes state (mints a token + logs in), so it
-     * must carry a valid form key.
+     * CSRF: the create action changes state (mints a token + drives a login),
+     * so it must carry a valid form key.
      */
     #[\Override]
     public function preDispatch()
@@ -34,8 +35,8 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_IndexController exte
     }
 
     /**
-     * Create a one-time token for the requested customer and redirect the admin
-     * to the storefront handover URL (which actually performs the login).
+     * Mint a magic-link token for the requested customer and redirect the admin
+     * to the storefront magicLinkLogin URL (core performs the actual login).
      */
     public function createAction(): void
     {
@@ -45,6 +46,12 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_IndexController exte
 
         if (!$helper->isEnabled()) {
             $session->addError($helper->__('Login as Customer is disabled.'));
+            $this->_redirect('adminhtml/customer/index');
+            return;
+        }
+
+        if (!$helper->isMagicLinkEnabled()) {
+            $session->addError($helper->__('Magic Link login must be enabled (System > Configuration > Customers > Login Options) for Login as Customer to work.'));
             $this->_redirect('adminhtml/customer/index');
             return;
         }
@@ -71,29 +78,36 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_IndexController exte
             return;
         }
 
+        if (!$customer->getIsActive()) {
+            $helper->log(
+                $customerId,
+                $adminId,
+                MageAustralia_LoginAsCustomer_Model_Log::STATUS_FAILED,
+                0,
+                'Customer account is inactive',
+                $customer->getEmail(),
+                $adminUser->getUsername(),
+            );
+            $session->addError($helper->__('Customer account is inactive.'));
+            $this->_redirect('adminhtml/customer/edit', ['id' => $customerId]);
+            return;
+        }
+
         $storeId = $helper->resolveCustomerStoreId($customer);
 
-        $rawToken = $helper->createToken($customerId, $adminId, $storeId);
-
-        // Record the request now; the storefront leg records the actual login.
+        // Record the request BEFORE the redirect; the customer_login observer
+        // matches this row to flag the session + record success.
         $helper->log(
             $customerId,
             $adminId,
             MageAustralia_LoginAsCustomer_Model_Log::STATUS_REQUESTED,
             $storeId,
-            'Token issued',
+            'Magic-link issued',
             $customer->getEmail(),
             $adminUser->getUsername(),
         );
 
-        // Build the storefront handover URL on the customer's own store so the
-        // session cookie is set on the right domain/scope.
-        $store = Mage::app()->getStore($storeId);
-        $url = $store->getUrl('loginascustomer/index/login', [
-            '_secure' => true,
-            '_nosid'  => true,
-            'token'   => $rawToken,
-        ]);
+        $url = $helper->createMagicLoginUrl($customer, $storeId);
 
         $this->getResponse()->setRedirect($url);
     }

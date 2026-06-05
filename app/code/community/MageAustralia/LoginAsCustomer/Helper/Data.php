@@ -5,12 +5,13 @@ declare(strict_types=1);
 /**
  * Login as Customer - business logic (stateless), per Maho helper convention.
  *
- * Security model:
- *  - Tokens are 256-bit CSPRNG values (random_bytes), URL-safe encoded.
- *  - Only the SHA-256 hash is stored; the raw token lives only in the
- *    one-time redirect URL. A DB read cannot mint a working link.
- *  - Tokens are single-use (atomic claim) and expire after a short TTL.
- *  - Every attempt is written to a permanent audit log.
+ * Login is delegated to Maho core's magic-link mechanism: we mint a magic-link
+ * token on the customer (core's secure rp_token, with core's expiry + one-time
+ * use + timing-safe validation) and hand off to core's
+ * customer/account/magicLinkLogin action, which establishes the session through
+ * the same proven path as a normal login. This module's own value-add is the
+ * admin button (ACL + CSRF), the permanent audit trail, and the storefront
+ * impersonation banner.
  *
  * @category   MageAustralia
  * @package    MageAustralia_LoginAsCustomer
@@ -20,17 +21,16 @@ declare(strict_types=1);
 class MageAustralia_LoginAsCustomer_Helper_Data extends Mage_Core_Helper_Abstract
 {
     public const XML_PATH_ENABLED     = 'loginascustomer/general/enabled';
-    public const XML_PATH_TOKEN_TTL   = 'loginascustomer/general/token_ttl';
     public const XML_PATH_SHOW_BANNER = 'loginascustomer/general/show_banner';
+
+    /** Core flag that must be on for the magic-link login action to exist. */
+    public const XML_PATH_MAGIC_LINK_ENABLED = 'customer/login/magic_link_enabled';
 
     /** ACL resource gating the whole feature. */
     public const ACL_RESOURCE = 'admin/customer/loginascustomer';
 
     /** Customer-session flag set while an admin is impersonating. */
     public const SESSION_FLAG = 'mageaustralia_login_as_customer';
-
-    protected int $_minTtl = 15;
-    protected int $_maxTtl = 3600;
 
     public function isEnabled(?int $storeId = null): bool
     {
@@ -43,16 +43,12 @@ class MageAustralia_LoginAsCustomer_Helper_Data extends Mage_Core_Helper_Abstrac
     }
 
     /**
-     * Token lifetime in seconds, clamped to a sane range so a mis-configured
-     * value can never make tokens immortal or instantly dead.
+     * Whether Maho core's magic-link login is enabled. The whole feature
+     * depends on it, since the login handoff uses core's magicLinkLogin action.
      */
-    public function getTokenTtl(?int $storeId = null): int
+    public function isMagicLinkEnabled(?int $storeId = null): bool
     {
-        $ttl = (int) Mage::getStoreConfig(self::XML_PATH_TOKEN_TTL, $storeId);
-        if ($ttl <= 0) {
-            $ttl = 60;
-        }
-        return max($this->_minTtl, min($this->_maxTtl, $ttl));
+        return Mage::getStoreConfigFlag(self::XML_PATH_MAGIC_LINK_ENABLED, $storeId);
     }
 
     /**
@@ -64,42 +60,25 @@ class MageAustralia_LoginAsCustomer_Helper_Data extends Mage_Core_Helper_Abstrac
     }
 
     /**
-     * Mint a one-time token for the given customer and return the raw token
-     * (to be placed in the redirect URL). Persists only the hash.
+     * Mint a magic-link token on the customer (core API) and return the
+     * storefront login URL to redirect the admin to.
+     *
+     * Reuses core's rp_token: secure generation, one-time use (cleared by the
+     * magicLinkLogin action), and core's configured expiry
+     * (customer/login/magic_link_token_expiration, default 10 min).
      */
-    public function createToken(int $customerId, int $adminId, int $storeId): string
+    public function createMagicLoginUrl(Mage_Customer_Model_Customer $customer, int $storeId): string
     {
-        $rawToken = $this->generateRawToken();
+        $token = $customer->generateMagicLinkToken();
+        $customer->changeResetPasswordLinkToken($token);
 
-        /** @var MageAustralia_LoginAsCustomer_Model_Token $token */
-        $token = Mage::getModel('loginascustomer/token');
-        $ttl = $this->getTokenTtl($storeId);
+        $store = Mage::app()->getStore($storeId);
 
-        $token->setTokenHash($token->hashToken($rawToken))
-            ->setCustomerId($customerId)
-            ->setAdminId($adminId)
-            ->setStoreId($storeId)
-            ->setCreatedAt(Mage_Core_Model_Locale::nowUtc())
-            // UTC, matching nowUtc(); the resource claim() compares against nowUtc().
-            ->setExpiresAt(gmdate('Y-m-d H:i:s', time() + $ttl))
-            ->save();
-
-        // Opportunistic housekeeping so the table can't grow unbounded.
-        try {
-            $token->getResource()->purgeExpired();
-        } catch (Exception $e) {
-            Mage::logException($e);
-        }
-
-        return $rawToken;
-    }
-
-    /**
-     * 256 bits of CSPRNG entropy, URL-safe base64 (no padding).
-     */
-    public function generateRawToken(): string
-    {
-        return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        return $store->getUrl('customer/account/magicLinkLogin', [
+            '_secure' => true,
+            '_nosid'  => true,
+            'token'   => $token,
+        ]);
     }
 
     /**

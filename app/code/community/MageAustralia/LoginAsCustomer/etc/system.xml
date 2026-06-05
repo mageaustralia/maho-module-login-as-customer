@@ -26,18 +26,8 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                            <comment>Master switch for the Login as Customer feature.</comment>
+                            <comment>Master switch for the Login as Customer feature. Requires Magic Link login to be enabled under Customers &gt; Login Options.</comment>
                         </enabled>
-                        <token_ttl translate="label comment">
-                            <label>Token Lifetime (seconds)</label>
-                            <frontend_type>text</frontend_type>
-                            <validate>validate-digits</validate>
-                            <sort_order>20</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment>How long a one-time login link stays valid. The link is consumed on the immediate redirect, so a short value (e.g. 60) is recommended.</comment>
-                        </token_ttl>
                         <show_banner translate="label comment">
                             <label>Show Impersonation Banner</label>
                             <frontend_type>select</frontend_type>
