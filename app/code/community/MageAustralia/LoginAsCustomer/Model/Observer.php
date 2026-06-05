@@ -97,6 +97,13 @@ class MageAustralia_LoginAsCustomer_Model_Observer
             ],
         );
 
+        // Opt this session out of Full Page Cache for its whole lifetime. The
+        // banner is per-session and must never be baked into a shared cached
+        // page (PII leak) or be absent because a cached page was served. The
+        // EXTERNAL_NO_CACHE cookie is honoured by maho-module-fpc (and the
+        // shipped nginx map); harmless if FPC is not installed.
+        $helper->setNoCacheCookie(true);
+
         $helper->log(
             $customerId,
             (int) $pending->getAdminId(),
@@ -106,6 +113,18 @@ class MageAustralia_LoginAsCustomer_Model_Observer
             (string) $customer->getEmail(),
             (string) $pending->getAdminUsername(),
         );
+    }
+
+    /**
+     * On logout, clear the FPC no-cache cookie so the visitor's next anonymous
+     * browsing can be served from cache again. (The session flag dies with the
+     * session, so it needs no explicit clearing.)
+     */
+    public function onCustomerLogout(Varien_Event_Observer $observer): void
+    {
+        /** @var MageAustralia_LoginAsCustomer_Helper_Data $helper */
+        $helper = Mage::helper('loginascustomer');
+        $helper->setNoCacheCookie(false);
     }
 
     /**

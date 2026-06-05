@@ -114,6 +114,28 @@ class MageAustralia_LoginAsCustomer_Helper_Data extends Mage_Core_Helper_Abstrac
         }
     }
 
+    /** FPC bypass cookie name (conventional; honoured by maho-module-fpc). */
+    public const NO_CACHE_COOKIE = 'EXTERNAL_NO_CACHE';
+
+    /**
+     * Set or clear the Full Page Cache bypass cookie for the current visitor.
+     *
+     * Set while impersonating so the per-session banner is never cached
+     * (leak/miss); cleared on logout so normal cached browsing resumes.
+     * Not HttpOnly (carries no secret; the value is just "1") and scoped to "/"
+     * so it covers every page. Lifetime 0 = session cookie, which matches the
+     * impersonation lifetime.
+     */
+    public function setNoCacheCookie(bool $on): void
+    {
+        $cookie = Mage::getSingleton('core/cookie');
+        if ($on) {
+            $cookie->set(self::NO_CACHE_COOKIE, '1', 0, '/', null, null, false);
+        } else {
+            $cookie->delete(self::NO_CACHE_COOKIE, '/');
+        }
+    }
+
     /**
      * Real client IP, honouring Maho's proxy-aware remote address helper.
      */

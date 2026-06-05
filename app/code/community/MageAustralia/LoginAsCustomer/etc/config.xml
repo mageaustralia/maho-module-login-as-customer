@@ -58,6 +58,15 @@
                     </mageaustralia_loginascustomer_flag>
                 </observers>
             </customer_login>
+            <!-- Clear the FPC no-cache cookie when the impersonated session ends. -->
+            <customer_logout>
+                <observers>
+                    <mageaustralia_loginascustomer_logout>
+                        <class>loginascustomer/observer</class>
+                        <method>onCustomerLogout</method>
+                    </mageaustralia_loginascustomer_logout>
+                </observers>
+            </customer_logout>
         </events>
     </global>
 
