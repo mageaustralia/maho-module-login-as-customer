@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Maho\Config\Route;
+
 /**
  * Admin entry point: mint a core magic-link token for the customer and hand off
  * to core's storefront magicLinkLogin action.
@@ -38,6 +40,7 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_IndexController exte
      * Mint a magic-link token for the requested customer and redirect the admin
      * to the storefront magicLinkLogin URL (core performs the actual login).
      */
+    #[Route('/admin/logincustomer_index/create', methods: ['GET', 'POST'])]
     public function createAction(): void
     {
         /** @var MageAustralia_LoginAsCustomer_Helper_Data $helper */

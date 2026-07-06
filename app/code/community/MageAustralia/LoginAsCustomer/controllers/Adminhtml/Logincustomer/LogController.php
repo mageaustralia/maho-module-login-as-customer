@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Maho\Config\Route;
+
 /**
  * Admin audit-log grid controller.
  *
@@ -20,6 +22,8 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_LogController extend
         return Mage::getSingleton('admin/session')->isAllowed('admin/customer/loginascustomer/log');
     }
 
+    #[Route('/admin/logincustomer_log', methods: ['GET'])]
+    #[Route('/admin/logincustomer_log/index', methods: ['GET'])]
     public function indexAction(): void
     {
         $this->loadLayout();
@@ -28,6 +32,7 @@ class MageAustralia_LoginAsCustomer_Adminhtml_Logincustomer_LogController extend
         $this->renderLayout();
     }
 
+    #[Route('/admin/logincustomer_log/grid', methods: ['GET', 'POST'])]
     public function gridAction(): void
     {
         $this->loadLayout();
