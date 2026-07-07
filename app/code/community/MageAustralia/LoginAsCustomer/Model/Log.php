@@ -33,6 +33,7 @@ class MageAustralia_LoginAsCustomer_Model_Log extends Mage_Core_Model_Abstract
 
     protected $_eventPrefix = 'loginascustomer_log';
 
+    #[\Override]
     protected function _construct(): void
     {
         $this->_init('loginascustomer/log');
