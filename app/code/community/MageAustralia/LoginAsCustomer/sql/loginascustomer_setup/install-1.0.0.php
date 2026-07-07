@@ -15,6 +15,7 @@ declare(strict_types=1);
  * @license    https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
+/** @var Mage_Core_Model_Resource_Setup $this */
 /** @var Mage_Core_Model_Resource_Setup $installer */
 $installer = $this;
 $installer->startSetup();
@@ -27,44 +28,44 @@ $connection = $installer->getConnection();
 $logTable = $installer->getTable('loginascustomer/log');
 if (!$connection->isTableExists($logTable)) {
     $table = $connection->newTable($logTable)
-        ->addColumn('log_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, [
+        ->addColumn('log_id', \Maho\Db\Ddl\Table::TYPE_INTEGER, null, [
             'identity'  => true,
             'unsigned'  => true,
             'nullable'  => false,
             'primary'   => true,
         ], 'Log ID')
-        ->addColumn('customer_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, [
+        ->addColumn('customer_id', \Maho\Db\Ddl\Table::TYPE_INTEGER, null, [
             'unsigned'  => true,
             'nullable'  => false,
         ], 'Target Customer ID')
-        ->addColumn('customer_email', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, [
+        ->addColumn('customer_email', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 255, [
             'nullable'  => true,
         ], 'Target Customer Email (snapshot)')
-        ->addColumn('admin_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, [
+        ->addColumn('admin_id', \Maho\Db\Ddl\Table::TYPE_INTEGER, null, [
             'unsigned'  => true,
             'nullable'  => false,
         ], 'Admin user ID')
-        ->addColumn('admin_username', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, [
+        ->addColumn('admin_username', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 255, [
             'nullable'  => true,
         ], 'Admin username (snapshot)')
-        ->addColumn('store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null, [
+        ->addColumn('store_id', \Maho\Db\Ddl\Table::TYPE_SMALLINT, null, [
             'unsigned'  => true,
             'nullable'  => false,
             'default'   => 0,
         ], 'Store ID')
-        ->addColumn('status', Varien_Db_Ddl_Table::TYPE_VARCHAR, 20, [
+        ->addColumn('status', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 20, [
             'nullable'  => false,
         ], 'Outcome: requested / success / failed')
-        ->addColumn('ip_address', Varien_Db_Ddl_Table::TYPE_VARCHAR, 45, [
+        ->addColumn('ip_address', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 45, [
             'nullable'  => true,
         ], 'Admin IP address')
-        ->addColumn('user_agent', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, [
+        ->addColumn('user_agent', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 255, [
             'nullable'  => true,
         ], 'Admin user agent')
-        ->addColumn('note', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, [
+        ->addColumn('note', \Maho\Db\Ddl\Table::TYPE_VARCHAR, 255, [
             'nullable'  => true,
         ], 'Detail / failure reason')
-        ->addColumn('created_at', Varien_Db_Ddl_Table::TYPE_DATETIME, null, [
+        ->addColumn('created_at', \Maho\Db\Ddl\Table::TYPE_DATETIME, null, [
             'nullable'  => false,
         ], 'Created At')
         ->addIndex(

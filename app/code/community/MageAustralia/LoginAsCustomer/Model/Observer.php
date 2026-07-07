@@ -22,7 +22,7 @@ class MageAustralia_LoginAsCustomer_Model_Observer
      * Add a "Login as Customer" button to the admin customer edit screen.
      * Uses the public addButton() API on the container block, so no rewrite.
      */
-    public function addLoginButton(Varien_Event_Observer $observer): void
+    public function addLoginButton(\Maho\Event\Observer $observer): void
     {
         $block = $observer->getEvent()->getBlock();
         if (!($block instanceof Mage_Adminhtml_Block_Customer_Edit)) {
@@ -68,7 +68,7 @@ class MageAustralia_LoginAsCustomer_Model_Observer
      * Fires for every customer login but is a no-op for normal logins, since
      * only the admin button writes a "requested" row.
      */
-    public function onCustomerLogin(Varien_Event_Observer $observer): void
+    public function onCustomerLogin(\Maho\Event\Observer $observer): void
     {
         /** @var MageAustralia_LoginAsCustomer_Helper_Data $helper */
         $helper = Mage::helper('loginascustomer');
@@ -120,7 +120,7 @@ class MageAustralia_LoginAsCustomer_Model_Observer
      * browsing can be served from cache again. (The session flag dies with the
      * session, so it needs no explicit clearing.)
      */
-    public function onCustomerLogout(Varien_Event_Observer $observer): void
+    public function onCustomerLogout(\Maho\Event\Observer $observer): void
     {
         /** @var MageAustralia_LoginAsCustomer_Helper_Data $helper */
         $helper = Mage::helper('loginascustomer');

@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 class MageAustralia_LoginAsCustomer_Model_Resource_Log extends Mage_Core_Model_Resource_Db_Abstract
 {
+    #[\Override]
     protected function _construct(): void
     {
         $this->_init('loginascustomer/log', 'log_id');
